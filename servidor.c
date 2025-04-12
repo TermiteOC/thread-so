@@ -26,39 +26,36 @@ void enviar_resposta(const char *resposta) {
 }
 
 void inserir(int id, const char *nome, char *resposta) {
-    void inserir(int id, const char *nome, char *resposta) {
-        pthread_mutex_lock(&mutex_banco);
-    
-        // Primeiro, verifica se o ID já existe
-        FILE *f = fopen(ARQUIVO_BANCO, "r");
-        int id_existente = 0;
-        if (f != NULL) {
-            Registro r;
-            while (fscanf(f, "%d %49s", &r.id, r.nome) == 2) {
-                if (r.id == id) {
-                    id_existente = 1;
-                    break;
-                }
-            }
-            fclose(f);
-        }
-    
-        if (id_existente) {
-            strcpy(resposta, "Erro: ID já existe no banco.");
-        } else {
-            f = fopen(ARQUIVO_BANCO, "a");
-            if (f == NULL) {
-                strcpy(resposta, "Erro ao abrir banco.");
-            } else {
-                fprintf(f, "%d %s\n", id, nome);
-                fclose(f);
-                strcpy(resposta, "Registro inserido com sucesso.");
+    pthread_mutex_lock(&mutex_banco);
+
+    // Primeiro, verifica se o ID já existe
+    FILE *f = fopen(ARQUIVO_BANCO, "r");
+    int id_existente = 0;
+    if (f != NULL) {
+        Registro r;
+        while (fscanf(f, "%d %49s", &r.id, r.nome) == 2) {
+            if (r.id == id) {
+                id_existente = 1;
+                break;
             }
         }
-    
-        pthread_mutex_unlock(&mutex_banco);
+        fclose(f);
     }
-    
+
+    if (id_existente) {
+        strcpy(resposta, "Erro: ID já existe no banco.");
+    } else {
+        f = fopen(ARQUIVO_BANCO, "a");
+        if (f == NULL) {
+            strcpy(resposta, "Erro ao abrir banco.");
+        } else {
+            fprintf(f, "%d %s\n", id, nome);
+            fclose(f);
+            strcpy(resposta, "Registro inserido com sucesso.");
+        }
+    }
+
+    pthread_mutex_unlock(&mutex_banco);
 }
 
 void deletar(int id, char *resposta) {
@@ -83,7 +80,7 @@ void deletar(int id, char *resposta) {
         else
             strcpy(resposta, "Registro não encontrado.");
     } else {
-        strcpy(resposta, "Erro ao acessar o banco.");
+        strcpy(resposta, "Erro ao abrir o banco.");
     }
     pthread_mutex_unlock(&mutex_banco);
 }
@@ -155,7 +152,7 @@ void atualizar(int id, const char *novo_nome, char *resposta) {
         else
             strcpy(resposta, "Registro não encontrado.");
     } else {
-        strcpy(resposta, "Erro ao acessar o banco.");
+        strcpy(resposta, "Erro ao abrir o banco.");
     }
     pthread_mutex_unlock(&mutex_banco);
 }
@@ -166,27 +163,42 @@ void *tratar_requisicao(void *arg) {
 
     int id;
     char nome[50];
-
-    int n = sscanf(req, "INSERT id=%d nome=%49[^\n]", &id, nome);
-    printf("%d", n);
-
+    
     if (sscanf(req, "INSERT id=%d nome=%49[^\n]", &id, nome) == 2) {
+        if (id < 0) {
+            strcpy(resposta, "Erro: ID negativo não é permitido.");
+        } else {
         inserir(id, nome, resposta);
+        }
     }
     else if (sscanf(req, "DELETE id=%d", &id) == 1) {
+        if (id < 0) {
+            strcpy(resposta, "Erro: ID negativo não é permitido.");
+        } else {
         deletar(id, resposta);
+        }
     }
     else if (sscanf(req, "SELECT id WHERE nome=%49s", nome) == 1) {
+        if (id < 0) {
+            strcpy(resposta, "Erro: ID negativo não é permitido.");
+        } else {
         selecionar_por_nome(nome, resposta);
+        }
     }
     else if (sscanf(req, "SELECT nome WHERE id=%d", &id) == 1) {
+        if (id < 0) {
+            strcpy(resposta, "Erro: ID negativo não é permitido.");
+        } else {
         selecionar_por_id(id, resposta);
+        }
     }
     else if (sscanf(req, "UPDATE id=%d nome=%49s", &id, nome) == 2) {
+        if (id < 0) {
+            strcpy(resposta, "Erro: ID negativo não é permitido.");
+        } else {
         atualizar(id, nome, resposta);
+        }
     }
-
-    printf("%d", n);
 
     enviar_resposta(resposta);
     free(req);
@@ -224,7 +236,7 @@ int main() {
             // thpool_destroy(thpool);
             pthread_t tid;
             pthread_create(&tid, NULL, tratar_requisicao, requisicao);
-            pthread_detach(tid); // libera recursos automaticamente ao terminar
+            pthread_detach(tid);
         }
     }
 

@@ -24,9 +24,9 @@ int main() {
 
     while (1) {
         fgets(requisicao, TAM_BUFFER, stdin);
-        if (requisicao[strlen(requisicao) - 1] == '\n') {
-            requisicao[strlen(requisicao) - 1] = '\0';
-        }
+        // if (requisicao[strlen(requisicao) - 1] == '\n') {
+        //     requisicao[strlen(requisicao) - 1] = '\0';
+        // }
 
         if (strcmp(requisicao, "sair") == 0) {
             break;
@@ -38,7 +38,7 @@ int main() {
             printf("Erro ao abrir o pipe de requisição");
             exit(1);
         }
-        write(fd_req, requisicao, strlen(requisicao) + 1);
+        write(fd_req, requisicao, strlen(requisicao));
         close(fd_req);
 
         // Espera resposta do servidor
