@@ -9,7 +9,7 @@
 #define FIFO_RESPOSTA   "/tmp/fifo_resposta"
 
 void clear() {
-    printf("\n\n\n\n\n\n\n\n");
+    printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
 }
 
 int main() {
@@ -29,9 +29,6 @@ int main() {
 
         fgets(requisicao, TAM_BUFFER, stdin);
         requisicao[strcspn(requisicao, "\n")] = '\0';
-        // if (requisicao[strlen(requisicao) - 1] == '\n') {
-        //     requisicao[strlen(requisicao) - 1] = '\0';
-        // }
 
         if (strcmp(requisicao, "sair") == 0) {
             break;

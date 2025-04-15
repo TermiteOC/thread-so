@@ -27,7 +27,6 @@ void enviar_resposta(const char *resposta) {
 void inserir(int id, const char *nome, char *resposta) {
     pthread_mutex_lock(&mutex_banco);
 
-    // Primeiro, verifica se o ID já existe
     FILE *f = fopen(ARQUIVO_BANCO, "r");
     int id_existente = 0;
     if (f != NULL) {
@@ -210,8 +209,6 @@ int main() {
     mkfifo(FIFO_REQUISICAO, 0666);
     mkfifo(FIFO_RESPOSTA, 0666);
 
-    // threadpool thpool = thpool_init(5);
-
     printf("Servidor iniciado. Aguardando requisições...\n");
 
     while (1) {
@@ -226,13 +223,6 @@ int main() {
 
         if (bytes_lidos > 0) {
             char *requisicao = strdup(buffer);
-            
-            // for (int i=0; i<40; i++){
-            //     thpool_add_work(thpool, tratar_requisicao, (void*)(uintptr_t)i);
-            // };
-
-            // thpool_wait(thpool);
-            // thpool_destroy(thpool);
             pthread_t tid;
             pthread_create(&tid, NULL, tratar_requisicao, requisicao);
             pthread_detach(tid);
