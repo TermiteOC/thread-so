@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <fcntl.h>
-#include <unistd.h>
+#include <fcntl.h>  /// O_RDONLY, O_WRONLY, open
+#include <unistd.h> /// read, write, close, mkfifo
 
 #include "banco.h"
 

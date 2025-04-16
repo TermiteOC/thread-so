@@ -1,11 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdint.h>
+#include <fcntl.h>    /// O_RDONLY, O_WRONLY, open
+#include <unistd.h>   /// read, write, close, mkfifo
 #include <pthread.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <sys/stat.h>
 
 #include "banco.h"
 
