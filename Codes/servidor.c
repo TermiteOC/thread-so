@@ -9,20 +9,7 @@
 
 #include "banco.h"
 
-#define TAM_BUFFER 256
-#define ARQUIVO_BANCO "banco.txt"
-#define FIFO_REQUISICAO "/tmp/fifo_requisicao"
-#define FIFO_RESPOSTA "/tmp/fifo_resposta"
-
 pthread_mutex_t mutex_banco = PTHREAD_MUTEX_INITIALIZER;
-
-void enviar_resposta(const char *resposta) {
-    int fd_resp = open(FIFO_RESPOSTA, O_WRONLY);
-    if (fd_resp >= 0) {
-        write(fd_resp, resposta, strlen(resposta) + 1);
-        close(fd_resp);
-    }
-}
 
 void inserir(int id, const char *nome, char *resposta) {
     pthread_mutex_lock(&mutex_banco);
@@ -113,7 +100,7 @@ void selecionar_por_nome(const char *nome, char *resposta) {
         int achou = 0;
         while (fscanf(f, "%d %49s", &r.id, r.nome) != EOF) {
             if (strcmp(r.nome, nome) == 0) {
-                sprintf(resposta, "Registro encontrado: id=%d nome=%s", r.id, r.nome);
+                sprintf(resposta, "Registro encontrado: id=%d nome=%s", r.id, r.nome); /// sprintf para escrever com variaveis no buffer
                 achou = 1;
                 break;
             }
@@ -162,7 +149,7 @@ void *tratar_requisicao(void *arg) {
     int id;
     char nome[50];
     
-    if (sscanf(req, "INSERT id=%d nome=%49[^\n]", &id, nome) == 2) {
+    if (sscanf(req, "INSERT id=%d nome=%49s", &id, nome) == 2) {
         if (id < 0) {
             strcpy(resposta, "Erro: ID negativo não é permitido.");
         } else {
@@ -198,7 +185,12 @@ void *tratar_requisicao(void *arg) {
         }
     }
 
-    enviar_resposta(resposta);
+    int fd_resp = open(FIFO_RESPOSTA, O_WRONLY);
+    if (fd_resp >= 0) {
+        write(fd_resp, resposta, strlen(resposta)); /// resposta não incluido \0
+        close(fd_resp);
+    }
+    
     free(req);
     return NULL;
 }
@@ -218,14 +210,21 @@ int main() {
             exit(1);
         }
 
-        ssize_t bytes_lidos = read(fd_req, buffer, sizeof(buffer));
+        ssize_t chars_lidos = read(fd_req, buffer, sizeof(buffer)); /// read inclui o \0
         close(fd_req);
 
-        if (bytes_lidos > 0) {
-            char *requisicao = strdup(buffer);
-            pthread_t tid;
-            pthread_create(&tid, NULL, tratar_requisicao, requisicao);
-            pthread_detach(tid);
+        if (chars_lidos > 0) {
+            char *req = malloc(chars_lidos); /// req com tamanho da string + \0
+            if (req != NULL) {
+                memcpy(req, buffer, chars_lidos);
+
+                pthread_t tid;
+                pthread_create(&tid, NULL, tratar_requisicao, (void *)req);
+                pthread_detach(tid);
+            } else {
+                perror("Erro ao alocar memória para a requisição");
+                exit(1);
+            }
         }
     }
 

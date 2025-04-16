@@ -4,9 +4,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 
-#define TAM_BUFFER 256
-#define FIFO_REQUISICAO "/tmp/fifo_requisicao"
-#define FIFO_RESPOSTA   "/tmp/fifo_resposta"
+#include "banco.h"
 
 void clear() {
     printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
@@ -17,7 +15,7 @@ int main() {
     mkfifo(FIFO_RESPOSTA, 0666);
 
     char requisicao[TAM_BUFFER];
-    char resultado[TAM_BUFFER];
+    char resposta[TAM_BUFFER];
 
     while (1) {
         printf("Cliente iniciado. Digite as requisições no seguinte formato:\n");
@@ -27,7 +25,7 @@ int main() {
         printf("UPDATE id=* nome=*\n");
         printf("sair\n");
 
-        fgets(requisicao, TAM_BUFFER, stdin);
+        fgets(requisicao, TAM_BUFFER, stdin); /// requisicao inclui \n em vez de \0
         requisicao[strcspn(requisicao, "\n")] = '\0';
 
         if (strcmp(requisicao, "sair") == 0) {
@@ -40,7 +38,7 @@ int main() {
             printf("Erro ao abrir o pipe de requisição");
             exit(1);
         }
-        write(fd_req, requisicao, strlen(requisicao));
+        write(fd_req, requisicao, strlen(requisicao) + 1); /// +1 para permitir o byte do \0 ser escrito
         close(fd_req);
 
         int fd_resp = open(FIFO_RESPOSTA, O_RDONLY);
@@ -49,10 +47,11 @@ int main() {
             printf("Erro ao abrir o pipe de resposta");
             exit(1);
         }
-        read(fd_resp, resultado, TAM_BUFFER);
+        ssize_t chars_lidos = read(fd_resp, resposta, TAM_BUFFER); /// não inclui o \0
+        resposta[chars_lidos] = '\0';
         close(fd_resp);
 
-        printf("Servidor: %s\n", resultado);
+        printf("Servidor: %s\n", resposta);
         printf("Pressione Enter para continuar...");
         getchar();
         clear();
