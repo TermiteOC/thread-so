@@ -1,1 +1,1 @@
-# thread-so
+Este projeto simula o funcionamento interno de um sistema de gerenciamento de requisições a um banco de dados, utilizando múltiplos processos e threads para garantir um processamento paralelo eficiente. A comunicação entre os processos é realizada por meio de pipe nomeado e o controle de concorrência é feito com mutexes.
